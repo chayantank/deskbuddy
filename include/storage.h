@@ -60,10 +60,10 @@ public:
     // Game high scores
     int32_t getDinoHighScore();
     void setDinoHighScore(int32_t score);
-    int32_t getPongHighScore();
-    void setPongHighScore(int32_t score);
-    int32_t getSimonHighScore();
-    void setSimonHighScore(int32_t score);
+    int32_t getFlappyHighScore();
+    void setFlappyHighScore(int32_t score);
+    int32_t getStackHighScore();
+    void setStackHighScore(int32_t score);
     int32_t getReactionBest();
     void setReactionBest(int32_t ms);
     

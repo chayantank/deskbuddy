@@ -61,14 +61,15 @@ void GameReaction::render() {
     d.setTextSize(1);
     
     if (_state == 0) {
-        _dm->drawCenteredText("REACTION TIME", 10, 1);
-        _dm->drawCenteredText("Wait for TAP!", 30, 1);
-        _dm->drawCenteredText("Tap to begin", 50, 1);
+        _dm->drawCenteredText("REACTION TEST", 4, 1);
+        _dm->drawCenteredText("Wait for TAP!", 24, 1);
+        _dm->drawCenteredText("Tap: Start", 42, 1);
+        _dm->drawCenteredText("Dbl-Tap: Exit", 54, 1);
         
         if (_bestTime < 9999) {
             char buf[16];
             snprintf(buf, sizeof(buf), "Best: %d ms", _bestTime);
-            _dm->drawCenteredText(buf, 20, 1);
+            _dm->drawCenteredText(buf, 14, 1);
         }
     } else if (_state == 1) {
         // Waiting
@@ -92,18 +93,19 @@ void GameReaction::render() {
         char buf[16];
         snprintf(buf, sizeof(buf), "%d ms", _lastTime);
         d.setTextSize(2);
-        _dm->drawCenteredText(buf, 14, 2);
+        _dm->drawCenteredText(buf, 10, 2);
         
         d.setTextSize(1);
         if (_lastTime <= _bestTime) {
-            _dm->drawCenteredText("NEW BEST!", 36, 1);
+            _dm->drawCenteredText("NEW BEST!", 32, 1);
         } else {
-            _dm->drawCenteredText("Good job!", 36, 1);
+            _dm->drawCenteredText("Good job!", 32, 1);
         }
-        _dm->drawCenteredText("Tap to retry", 50, 1);
+        _dm->drawCenteredText("Tap: Retry | Dbl-Tap: Exit", 52, 1);
         
     } else if (_state == 4) {
-        _dm->drawCenteredText("TOO EARLY!", 24, 2);
-        _dm->drawCenteredText("Tap to retry", 50, 1);
+        d.invertDisplay(false);
+        _dm->drawCenteredText("TOO EARLY!", 16, 2);
+        _dm->drawCenteredText("Tap: Retry | Dbl-Tap: Exit", 48, 1);
     }
 }

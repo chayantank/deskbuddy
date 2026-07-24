@@ -179,20 +179,20 @@ void Storage::setDinoHighScore(int32_t score) {
     saveInt(NVS_KEY_DINO_HISCORE, score);
 }
 
-int32_t Storage::getPongHighScore() {
-    return loadInt(NVS_KEY_PONG_HISCORE, 0);
+int32_t Storage::getFlappyHighScore() {
+    return loadInt(NVS_KEY_FLAPPY_HISCORE, 0);
 }
 
-void Storage::setPongHighScore(int32_t score) {
-    saveInt(NVS_KEY_PONG_HISCORE, score);
+void Storage::setFlappyHighScore(int32_t score) {
+    saveInt(NVS_KEY_FLAPPY_HISCORE, score);
 }
 
-int32_t Storage::getSimonHighScore() {
-    return loadInt(NVS_KEY_SIMON_HISCORE, 0);
+int32_t Storage::getStackHighScore() {
+    return loadInt(NVS_KEY_STACK_HISCORE, 0);
 }
 
-void Storage::setSimonHighScore(int32_t score) {
-    saveInt(NVS_KEY_SIMON_HISCORE, score);
+void Storage::setStackHighScore(int32_t score) {
+    saveInt(NVS_KEY_STACK_HISCORE, score);
 }
 
 int32_t Storage::getReactionBest() {

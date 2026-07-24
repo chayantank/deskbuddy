@@ -220,14 +220,16 @@ void GameDino::render() {
     
     // Overlays
     if (_state == 0) {
-        d.fillRoundRect(24, 20, 80, 24, 4, SSD1306_BLACK);
-        d.drawRoundRect(24, 20, 80, 24, 4, SSD1306_WHITE);
-        _dm->drawCenteredText("DINO RUN", 24, 1);
-        _dm->drawCenteredText("Tap to play", 34, 1);
+        d.fillRoundRect(16, 16, 96, 32, 4, SSD1306_BLACK);
+        d.drawRoundRect(16, 16, 96, 32, 4, SSD1306_WHITE);
+        _dm->drawCenteredText("DINO RUN", 20, 1);
+        _dm->drawCenteredText("Tap to Jump", 29, 1);
+        _dm->drawCenteredText("Dbl-Tap: Exit", 38, 1);
     } else if (_state == 2) {
-        d.fillRoundRect(24, 20, 80, 24, 4, SSD1306_BLACK);
-        d.drawRoundRect(24, 20, 80, 24, 4, SSD1306_WHITE);
-        _dm->drawCenteredText("GAME OVER", 24, 1);
-        _dm->drawCenteredText("Tap to reset", 34, 1);
+        d.fillRoundRect(16, 16, 96, 32, 4, SSD1306_BLACK);
+        d.drawRoundRect(16, 16, 96, 32, 4, SSD1306_WHITE);
+        _dm->drawCenteredText("GAME OVER", 20, 1);
+        _dm->drawCenteredText("Tap to Retry", 29, 1);
+        _dm->drawCenteredText("Dbl-Tap: Exit", 38, 1);
     }
 }

@@ -10,15 +10,15 @@
 
 // Forward declarations
 class GameDino;
-class GamePong;
-class GameSimon;
+class GameFlappy;
+class GameStack;
 class GameReaction;
 
 enum class GameID {
     NONE = -1,
     DINO = 0,
-    PONG = 1,
-    SIMON = 2,
+    FLAPPY = 1,
+    STACK = 2,
     REACTION = 3,
     COUNT = 4
 };
@@ -42,11 +42,12 @@ private:
     
     GameID _selectedGame = GameID::NONE;
     int _menuIndex = 0;
+    float _smoothScrollOffset = 0.0f;
     
-    // Game instances (dynamically allocated to save RAM when not in games)
+    // Game instances (dynamically allocated to save RAM)
     GameDino* _dino = nullptr;
-    GamePong* _pong = nullptr;
-    GameSimon* _simon = nullptr;
+    GameFlappy* _flappy = nullptr;
+    GameStack* _stack = nullptr;
     GameReaction* _reaction = nullptr;
     
     void _renderMenu();

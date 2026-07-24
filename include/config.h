@@ -79,8 +79,8 @@
 #define NVS_KEY_CLOCK_MODE      "clock_mode"
 #define NVS_KEY_EYE_STYLE       "eye_style"
 #define NVS_KEY_DINO_HISCORE    "dino_hi"
-#define NVS_KEY_PONG_HISCORE    "pong_hi"
-#define NVS_KEY_SIMON_HISCORE   "simon_hi"
+#define NVS_KEY_FLAPPY_HISCORE  "flappy_hi"
+#define NVS_KEY_STACK_HISCORE   "stack_hi"
 #define NVS_KEY_REACT_BEST      "react_best"
 #define NVS_KEY_CONFIGURED      "configured"
 
