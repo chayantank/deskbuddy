@@ -6,3 +6,4 @@
 *.bin
 *.elf
 .DS_Store
+include/local_config.h

@@ -15,6 +15,7 @@
 #include "app_clock.h"
 #include "app_weather.h"
 #include "app_world_info.h"
+#include "app_server.h"
 #include "app_games.h"
 #include "app_settings.h"
 
@@ -31,6 +32,7 @@ TimeService     g_time;
 AppClock        appClock;
 AppWeather      appWeather;
 AppWorldInfo    appWorldInfo;
+AppServer       appServer;
 AppGames        appGames;
 AppSettings     appSettings;
 
@@ -67,6 +69,7 @@ void setup() {
     appClock.begin(&g_display, &g_time, &g_storage);
     appWeather.begin(&g_display, &g_storage, &g_face);
     appWorldInfo.begin(&g_display, &g_storage);
+    appServer.begin(&g_display, &g_storage);
     appGames.begin(&g_display, &g_storage, &g_face);
     appSettings.begin(&g_display, &g_storage, &g_wifi, &g_face);
     
@@ -87,6 +90,7 @@ void switchApp(AppID newApp) {
         case AppID::CLOCK: appClock.onExit(); break;
         case AppID::WEATHER: appWeather.onExit(); break;
         case AppID::WORLD_INFO: appWorldInfo.onExit(); break;
+        case AppID::SERVER: appServer.onExit(); break;
         case AppID::GAMES: appGames.onExit(); break;
         case AppID::SETTINGS: appSettings.onExit(); break;
         default: break;
@@ -101,6 +105,7 @@ void switchApp(AppID newApp) {
         case AppID::CLOCK: appClock.onEnter(); break;
         case AppID::WEATHER: appWeather.onEnter(); break;
         case AppID::WORLD_INFO: appWorldInfo.onEnter(); break;
+        case AppID::SERVER: appServer.onEnter(); break;
         case AppID::GAMES: appGames.onEnter(); break;
         case AppID::SETTINGS: appSettings.onEnter(); break;
         default: break;
@@ -124,6 +129,24 @@ void loop() {
         lastBackground = millis();
     }
     
+    // Auto-cycle tabs every 2 minutes (Clock -> Weather -> Info -> Server -> Face)
+    static unsigned long lastAutoCycle = millis();
+    if (millis() - lastAutoCycle > 120000UL) {
+        lastAutoCycle = millis();
+        if (!g_menu.isActive() && g_currentApp != AppID::GAMES && g_currentApp != AppID::SETTINGS) {
+            AppID nextTab;
+            switch (g_currentApp) {
+                case AppID::FACE:       nextTab = AppID::CLOCK; break;
+                case AppID::CLOCK:      nextTab = AppID::WEATHER; break;
+                case AppID::WEATHER:    nextTab = AppID::WORLD_INFO; break;
+                case AppID::WORLD_INFO: nextTab = AppID::SERVER; break;
+                case AppID::SERVER:     nextTab = AppID::FACE; break;
+                default:                nextTab = AppID::CLOCK; break;
+            }
+            switchApp(nextTab);
+        }
+    }
+    
     // 3. Frame rate cap
     if (!g_display.endFrame()) {
         // Yield to let WiFi/background tasks run while waiting for frame time
@@ -137,40 +160,49 @@ void loop() {
     // 4. Input processing
     TouchEvent ev = g_touch.update();
     if (ev != TouchEvent::NONE) {
-        if (g_currentApp == AppID::FACE && !g_menu.isActive()) {
-            if (ev == TouchEvent::TAP) {
-                // Open menu
-                g_display.captureScreen();
-                g_menu.show();
-            } else if (ev == TouchEvent::LONG_PRESS) {
-                g_face.onLongTouch();
-            } else {
-                g_face.onTouch();
-            }
-        } 
-        else if (g_menu.isActive()) {
+        if (g_menu.isActive()) {
             g_menu.handleTouch(ev);
             if (g_menu.getSelectedApp() != AppID::NONE) {
                 AppID nextApp = g_menu.getSelectedApp();
                 g_menu.hide();
                 g_menu.clearSelectedApp();
                 switchApp(nextApp);
+                lastAutoCycle = millis(); // Reset auto-cycle on user action
+            }
+        }
+        else if (g_currentApp == AppID::GAMES) {
+            appGames.handleTouch(ev);
+            if (ev == TouchEvent::DOUBLE_TAP) {
+                switchApp(AppID::FACE);
+                lastAutoCycle = millis();
+            }
+        }
+        else if (g_currentApp == AppID::SETTINGS) {
+            appSettings.handleTouch(ev);
+            if (ev == TouchEvent::DOUBLE_TAP) {
+                switchApp(AppID::FACE);
+                lastAutoCycle = millis();
             }
         }
         else {
-            // App-specific input
-            switch (g_currentApp) {
-                case AppID::CLOCK: appClock.handleTouch(ev); break;
-                case AppID::WEATHER: appWeather.handleTouch(ev); break;
-                case AppID::WORLD_INFO: appWorldInfo.handleTouch(ev); break;
-                case AppID::GAMES: appGames.handleTouch(ev); break;
-                case AppID::SETTINGS: appSettings.handleTouch(ev); break;
-                default: break;
-            }
-            
-            // Global double-tap back to face from any app
-            if (ev == TouchEvent::DOUBLE_TAP && g_currentApp != AppID::FACE) {
+            // TAP on any tab (Face, Clock, Weather, Info, Server) opens Menu!
+            if (ev == TouchEvent::TAP) {
+                g_display.captureScreen();
+                g_menu.show();
+                lastAutoCycle = millis();
+            } else if (ev == TouchEvent::DOUBLE_TAP) {
                 switchApp(AppID::FACE);
+                lastAutoCycle = millis();
+            } else {
+                // Route long-press or other gestures
+                switch (g_currentApp) {
+                    case AppID::FACE: g_face.onTouch(); break;
+                    case AppID::CLOCK: appClock.handleTouch(ev); break;
+                    case AppID::WEATHER: appWeather.handleTouch(ev); break;
+                    case AppID::WORLD_INFO: appWorldInfo.handleTouch(ev); break;
+                    case AppID::SERVER: appServer.handleTouch(ev); break;
+                    default: break;
+                }
             }
         }
     }
@@ -184,6 +216,7 @@ void loop() {
             case AppID::CLOCK: appClock.update(); break;
             case AppID::WEATHER: appWeather.update(); break;
             case AppID::WORLD_INFO: appWorldInfo.update(); break;
+            case AppID::SERVER: appServer.update(); break;
             case AppID::GAMES: appGames.update(); break;
             case AppID::SETTINGS: appSettings.update(); break;
             default: break;
@@ -204,6 +237,7 @@ void loop() {
             case AppID::CLOCK: appClock.render(); break;
             case AppID::WEATHER: appWeather.render(); break;
             case AppID::WORLD_INFO: appWorldInfo.render(); break;
+            case AppID::SERVER: appServer.render(); break;
             case AppID::GAMES: appGames.render(); break;
             case AppID::SETTINGS: appSettings.render(); break;
             default: break;

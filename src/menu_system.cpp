@@ -16,6 +16,7 @@ static const MenuItem MENU_ITEMS[MENU_ITEM_COUNT] = {
     {AppID::CLOCK,      "Clock",    icon_clock_24},
     {AppID::WEATHER,    "Weather",  icon_weather_24},
     {AppID::WORLD_INFO, "Info",     icon_globe_24},
+    {AppID::SERVER,     "Server",   icon_server_24},
     {AppID::GAMES,      "Games",    icon_games_24},
     {AppID::SETTINGS,   "Settings", icon_settings_24}
 };
@@ -73,19 +74,15 @@ void MenuSystem::render() {
     
     _drawCarousel();
     
-    // Footer hint
-    d.setTextSize(1);
-    _dm->drawCenteredText("Tap: Next | Hold: Select", SCREEN_H - 12, 1);
-    
     // Pagination dots
     int dotSpacing = 8;
     int totalWidth = (MENU_ITEM_COUNT - 1) * dotSpacing;
     int startX = (SCREEN_W - totalWidth) / 2;
     for (int i = 0; i < MENU_ITEM_COUNT; i++) {
         if (i == _currentIndex) {
-            d.fillCircle(startX + i * dotSpacing, SCREEN_H - 14, 2, SSD1306_WHITE);
+            d.fillCircle(startX + i * dotSpacing, SCREEN_H - 6, 2, SSD1306_WHITE);
         } else {
-            d.drawPixel(startX + i * dotSpacing, SCREEN_H - 14, SSD1306_WHITE);
+            d.drawPixel(startX + i * dotSpacing, SCREEN_H - 6, SSD1306_WHITE);
         }
     }
 }

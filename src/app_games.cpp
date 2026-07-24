@@ -131,18 +131,16 @@ void AppGames::_renderMenu() {
     };
     
     d.setTextSize(1);
-    _dm->drawCenteredText(gameNames[_menuIndex], 26, 2);
-    _dm->drawCenteredText("Tap: Next | Hold: Start", 46, 1);
-    _dm->drawCenteredText("Dbl-Tap: Back", 56, 1);
+    _dm->drawCenteredText(gameNames[_menuIndex], 30, 2);
     
     // Page Dots
     int startX = SCREEN_W / 2 - 12;
     for (int i = 0; i < (int)GameID::COUNT; i++) {
         int x = startX + i * 8;
         if (i == _menuIndex) {
-            d.fillCircle(x, 60, 2, SSD1306_WHITE);
+            d.fillCircle(x, 58, 2, SSD1306_WHITE);
         } else {
-            d.drawPixel(x, 60, SSD1306_WHITE);
+            d.drawPixel(x, 58, SSD1306_WHITE);
         }
     }
 }

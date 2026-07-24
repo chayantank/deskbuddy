@@ -59,8 +59,21 @@
 #define SLEEPY_TIMEOUT_MS       120000UL    // 2 min
 #define SLEEP_TIMEOUT_MS        300000UL    // 5 min
 
+#if __has_include("local_config.h")
+#include "local_config.h"
+#endif
+
+// --- Pi Server Monitor (Local Network Companion) ---
+#ifndef SERVER_MONITOR_URL
+#define SERVER_MONITOR_URL      "http://192.168.x.x:34001/api/v1.0/get-history?n=1"
+#endif
+
+#ifndef SERVER_DISPLAY_NAME
+#define SERVER_DISPLAY_NAME     "PI SERVER"
+#endif
+
 // --- Menu ---
-#define MENU_ITEM_COUNT         6
+#define MENU_ITEM_COUNT         7
 #define MENU_ICON_SIZE          24
 #define MENU_SCROLL_SPEED       3
 

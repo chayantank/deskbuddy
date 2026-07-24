@@ -11,8 +11,9 @@ enum class AppID {
     CLOCK = 1,
     WEATHER = 2,
     WORLD_INFO = 3,
-    GAMES = 4,
-    SETTINGS = 5,
+    SERVER = 4,
+    GAMES = 5,
+    SETTINGS = 6,
     NONE = 255
 };
 
