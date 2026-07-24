@@ -17,12 +17,12 @@
 #define FRAME_TIME_MS   (1000 / TARGET_FPS)
 
 // --- Touch Timing (ms) ---
-#define TOUCH_DEBOUNCE_MS       50
-#define TOUCH_TAP_MAX_MS        300
-#define TOUCH_DOUBLE_GAP_MS     400
-#define TOUCH_LONG_PRESS_MS     800
-#define TOUCH_HOLD_MS           2000
-#define TOUCH_DEEP_HOLD_MS      5000
+#define TOUCH_DEBOUNCE_MS       30
+#define TOUCH_TAP_MAX_MS        250
+#define TOUCH_DOUBLE_GAP_MS     250
+#define TOUCH_LONG_PRESS_MS     650
+#define TOUCH_HOLD_MS           1800
+#define TOUCH_DEEP_HOLD_MS      4500
 
 // --- WiFi AP (Captive Portal) ---
 #define AP_SSID         "DeskBuddy-Setup"
@@ -38,7 +38,7 @@
 #define API_WEATHER         "https://api.open-meteo.com/v1/forecast"
 #define API_QUOTES          "https://zenquotes.io/api/random"
 #define API_FACTS           "https://uselessfacts.jsph.pl/api/v2/facts/random?language=en"
-#define API_GOLD            "https://api.gold-api.com/price/XAU"
+#define API_GOLD            "https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT"
 #define API_NEWS_SPORTS     "http://inshortsapi.vercel.app/news?category=sports"
 #define API_NEWS_INDIA      "http://inshortsapi.vercel.app/news?category=national"
 #define API_NEWS_TECH       "http://inshortsapi.vercel.app/news?category=technology"
@@ -91,6 +91,7 @@
 #define NVS_KEY_SLEEP_TIMEOUT   "sleep_to"
 #define NVS_KEY_CLOCK_MODE      "clock_mode"
 #define NVS_KEY_EYE_STYLE       "eye_style"
+#define NVS_KEY_HAPPINESS       "happiness"
 #define NVS_KEY_DINO_HISCORE    "dino_hi"
 #define NVS_KEY_FLAPPY_HISCORE  "flappy_hi"
 #define NVS_KEY_STACK_HISCORE   "stack_hi"

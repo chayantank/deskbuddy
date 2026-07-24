@@ -171,6 +171,14 @@ void Storage::setEyeStyle(uint8_t style) {
     saveInt(NVS_KEY_EYE_STYLE, (int32_t)style);
 }
 
+uint8_t Storage::getHappiness() {
+    return (uint8_t)loadInt(NVS_KEY_HAPPINESS, 75);
+}
+
+void Storage::setHappiness(uint8_t happiness) {
+    saveInt(NVS_KEY_HAPPINESS, (int32_t)happiness);
+}
+
 int32_t Storage::getDinoHighScore() {
     return loadInt(NVS_KEY_DINO_HISCORE, 0);
 }

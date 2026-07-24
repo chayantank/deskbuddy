@@ -57,6 +57,9 @@ public:
     uint8_t getEyeStyle();
     void setEyeStyle(uint8_t style);
     
+    uint8_t getHappiness();
+    void setHappiness(uint8_t happiness);
+    
     // Game high scores
     int32_t getDinoHighScore();
     void setDinoHighScore(int32_t score);

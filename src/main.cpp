@@ -58,7 +58,7 @@ void setup() {
     g_display.setFlip(g_storage.getDisplayFlip());
     
     g_touch.begin();
-    g_face.begin(&g_display);
+    g_face.begin(&g_display, &g_storage);
     g_face.setEyeStyle((EyeStyle)g_storage.getEyeStyle());
     
     g_menu.begin(&g_display);
@@ -184,8 +184,23 @@ void loop() {
                 lastAutoCycle = millis();
             }
         }
+        else if (g_currentApp == AppID::FACE) {
+            if (ev == TouchEvent::TAP) {
+                // One-tap expression cycling directly on the Pet Face!
+                g_face.cycleNextExpression();
+                lastAutoCycle = millis();
+            } else if (ev == TouchEvent::LONG_PRESS || ev == TouchEvent::HOLD) {
+                // Long press opens Main Menu Carousel!
+                g_display.captureScreen();
+                g_menu.show();
+                lastAutoCycle = millis();
+            } else if (ev == TouchEvent::DOUBLE_TAP) {
+                switchApp(AppID::CLOCK);
+                lastAutoCycle = millis();
+            }
+        }
         else {
-            // TAP on any tab (Face, Clock, Weather, Info, Server) opens Menu!
+            // TAP on other tabs (Clock, Weather, Info, Server) opens Menu!
             if (ev == TouchEvent::TAP) {
                 g_display.captureScreen();
                 g_menu.show();

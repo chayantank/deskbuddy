@@ -2,6 +2,7 @@
 // DeskBuddy — Face Renderer Implementation
 // ============================================================================
 #include "face_renderer.h"
+#include "storage.h"
 #include "easing.h"
 #include <math.h>
 
@@ -12,18 +13,63 @@
 #define MOUTH_X       64.0f
 #define MOUTH_Y       52.0f
 
-void FaceRenderer::begin(DisplayManager* dm) {
+void FaceRenderer::begin(DisplayManager* dm, Storage* storage) {
     _dm = dm;
+    _storage = storage;
+    if (_storage) {
+        _happiness = _storage->getHappiness();
+    } else {
+        _happiness = 75;
+    }
+    
     _lastActivityTime = millis();
     _nextBlinkTime = millis() + random(BLINK_MIN_INTERVAL_MS, BLINK_MAX_INTERVAL_MS);
     _nextLookTime = millis() + random(1000, IDLE_LOOK_INTERVAL_MS);
     
-    // Initialize with neutral expression
+    // Initialize base neutral params so eye dimensions are never zero!
     _setExpressionParams(Expression::NEUTRAL, _leftEye, _rightEye, _mouth, _extras);
     _targetLeftEye = _leftEye;
     _targetRightEye = _rightEye;
     _targetMouth = _mouth;
     _targetExtras = _extras;
+    _transProgress = 1.0f;
+    
+    updateMood();
+}
+
+void FaceRenderer::setHappiness(uint8_t val) {
+    if (val > 100) val = 100;
+    _happiness = val;
+    if (_storage) _storage->setHappiness(_happiness);
+    updateMood();
+}
+
+void FaceRenderer::addHappiness(int delta) {
+    int newH = (int)_happiness + delta;
+    if (newH > 100) newH = 100;
+    if (newH < 0) newH = 0;
+    _happiness = (uint8_t)newH;
+    if (_storage) _storage->setHappiness(_happiness);
+    updateMood();
+}
+
+void FaceRenderer::updateMood() {
+    if (_happiness >= 80) {
+        // High happiness -> Happy / Love / Excited
+        if (_targetExpr != Expression::LOVE && _targetExpr != Expression::PARTY && _targetExpr != Expression::EXCITED) {
+            setExpression(Expression::HAPPY, 300);
+        }
+    } else if (_happiness >= 40) {
+        // Neutral / Chill
+        if (_targetExpr != Expression::CHILL && _targetExpr != Expression::PLAYFUL) {
+            setExpression(Expression::NEUTRAL, 300);
+        }
+    } else {
+        // Low happiness -> Sad / Skeptical / Pouty
+        if (_targetExpr != Expression::ANGRY) {
+            setExpression(Expression::SAD, 300);
+        }
+    }
 }
 
 const char* FaceRenderer::getExpressionName(Expression expr) const {
@@ -62,6 +108,13 @@ void FaceRenderer::setExpression(Expression expr, uint16_t transitionMs) {
     // Snapshot current state as "from"
     // Target params set for interpolation
     _setExpressionParams(expr, _targetLeftEye, _targetRightEye, _targetMouth, _targetExtras);
+}
+
+void FaceRenderer::cycleNextExpression() {
+    int next = ((int)_targetExpr + 1) % (int)Expression::COUNT;
+    setExpression((Expression)next, 250);
+    _toastStartTime = millis();
+    addHappiness(5);
 }
 
 void FaceRenderer::_setExpressionParams(Expression expr, EyeParams& le, EyeParams& re, MouthParams& m, FaceExtras& ex) {
@@ -375,11 +428,12 @@ void FaceRenderer::resetIdleTimer() {
 
 void FaceRenderer::onTouch() {
     resetIdleTimer();
+    addHappiness(5);
     _touchCount++;
     unsigned long now = millis();
     
     if (now - _lastTouchTime < 3000) {
-        // Rapid touching → love!
+        // Rapid touching -> love!
         if (_touchCount >= 3) {
             setExpression(Expression::LOVE, 200);
             _touchReacting = true;
@@ -401,6 +455,7 @@ void FaceRenderer::onTouch() {
 
 void FaceRenderer::onLongTouch() {
     resetIdleTimer();
+    addHappiness(15);
     setExpression(Expression::BLUSHING, 300);
     _touchReacting = true;
     _touchReactTime = millis();
@@ -482,6 +537,15 @@ void FaceRenderer::render() {
     
     // Draw extras
     _drawExtras(_extras);
+    
+    // Floating Expression Toast Banner (when cycled via one-tap!)
+    if (millis() - _toastStartTime < 1200) {
+        int tw = 80;
+        int tx = (SCREEN_W - tw) / 2;
+        d.fillRect(tx, 1, tw, 11, SSD1306_BLACK);
+        d.drawRoundRect(tx, 1, tw, 11, 3, SSD1306_WHITE);
+        _dm->drawCenteredText(getExpressionName(_targetExpr), 3, 1);
+    }
 }
 
 void FaceRenderer::_drawEye(const EyeParams& eye) {
@@ -544,7 +608,10 @@ void FaceRenderer::_drawEye(const EyeParams& eye) {
         // Vector-style rounded box eyes
         d.fillRoundRect(drawX, drawY, drawW, drawH, 4, SSD1306_WHITE);
         d.fillRoundRect((int)px - (int)eye.pupilSize, (int)py - (int)eye.pupilSize, (int)eye.pupilSize * 2, (int)eye.pupilSize * 2, 2, SSD1306_BLACK);
-        d.drawPixel((int)(px - 1), (int)(py - 1), SSD1306_WHITE);
+        // Primary 2x2 Catchlight specular glint
+        d.fillRect((int)(px - 2), (int)(py - 2), 2, 2, SSD1306_WHITE);
+        // Secondary 1x1 Catchlight glint
+        d.drawPixel((int)(px + 1), (int)(py + 1), SSD1306_WHITE);
     }
     else if (_eyeStyle == EyeStyle::NEON_OUTLINE) {
         // Neon outline hollow eyes
@@ -565,7 +632,10 @@ void FaceRenderer::_drawEye(const EyeParams& eye) {
         int r = (int)(eye.roundness * min(hw, hh) * 0.5f);
         d.fillRoundRect(drawX, drawY, drawW, drawH, r > 0 ? r : 3, SSD1306_WHITE);
         d.fillCircle((int)px, (int)py, (int)eye.pupilSize, SSD1306_BLACK);
-        d.drawPixel((int)(px - 1), (int)(py - 1), SSD1306_WHITE);
+        // Primary 2x2 Catchlight specular glint
+        d.fillRect((int)(px - 2), (int)(py - 2), 2, 2, SSD1306_WHITE);
+        // Secondary 1x1 Catchlight glint
+        d.drawPixel((int)(px + 1), (int)(py + 1), SSD1306_WHITE);
     }
 }
 

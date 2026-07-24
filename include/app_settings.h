@@ -27,7 +27,8 @@ private:
     FaceRenderer* _face = nullptr;
     
     int _menuIndex = 0;
-    static const int NUM_SETTINGS = 7;
+    static const int NUM_SETTINGS = 9;
+    int _previewExprIndex = 0;
     
     // Setting values loaded on enter
     uint8_t _brightness = 3;

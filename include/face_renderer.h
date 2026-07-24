@@ -5,6 +5,8 @@
 #include <Arduino.h>
 #include "display_manager.h"
 
+class Storage;
+
 enum class EyeStyle {
     CLASSIC_OVAL,
     VECTOR_SQUARE,
@@ -75,17 +77,24 @@ struct FaceExtras {
 
 class FaceRenderer {
 public:
-    void begin(DisplayManager* dm);
+    void begin(DisplayManager* dm, Storage* storage = nullptr);
     void update();         // call every frame
     void render();         // draw current face state
     
     // Expression & Style control
     void setExpression(Expression expr, uint16_t transitionMs = EXPRESSION_TRANSITION_MS);
+    void cycleNextExpression();
     Expression getExpression() const { return _targetExpr; }
     const char* getExpressionName(Expression expr) const;
     
     void setEyeStyle(EyeStyle style) { _eyeStyle = style; }
     EyeStyle getEyeStyle() const { return _eyeStyle; }
+    
+    // Emotional Mood System
+    uint8_t getHappiness() const { return _happiness; }
+    void setHappiness(uint8_t val);
+    void addHappiness(int delta);
+    void updateMood();
     
     // External triggers
     void onTouch();        // react to touch
@@ -101,6 +110,8 @@ public:
     
 private:
     DisplayManager* _dm = nullptr;
+    Storage* _storage = nullptr;
+    uint8_t _happiness = 75;
     
     // Current and target state
     EyeStyle _eyeStyle = EyeStyle::CLASSIC_OVAL;
@@ -112,6 +123,7 @@ private:
     float _transProgress = 1.0f;       // 0.0 to 1.0
     uint16_t _transDuration = 300;
     unsigned long _transStartTime = 0;
+    unsigned long _toastStartTime = 0;
     
     // Eye parameters (interpolated)
     EyeParams _leftEye, _rightEye;

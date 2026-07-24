@@ -121,16 +121,12 @@ void AppClock::_renderDigital() {
     
     bool is24 = _storage ? _storage->getTimeFormat24() : true;
     
-    // Header: Live date (e.g. Fri, Jul 24)
+    // Header: Live date (e.g. FRI, JUL 24)
     d.setFont();
     d.setTextSize(1);
     _dm->drawCenteredText(_time->getFormattedDate().c_str(), 2, 1);
+    d.drawFastHLine(0, 12, SCREEN_W, SSD1306_WHITE);
     
-    // Jumbo time
-    d.setFont(&ClockFont24pt7b);
-    d.setTextSize(1);
-    
-    char timeStr[10];
     int h = _time->getHour();
     int m = _time->getMinute();
     int s = _time->getSecond();
@@ -142,36 +138,33 @@ void AppClock::_renderDigital() {
         else if (h > 12) h -= 12;
     }
     
-    // Blink colon every second
+    // Jumbo Size 3 time string (90px wide, 24px tall)
+    char timeStr[10];
     if (s % 2 == 0) {
         snprintf(timeStr, sizeof(timeStr), "%02d:%02d", h, m);
     } else {
         snprintf(timeStr, sizeof(timeStr), "%02d %02d", h, m);
     }
     
-    int16_t x1, y1;
-    uint16_t w, h_rect;
-    d.getTextBounds(timeStr, 0, 0, &x1, &y1, &w, &h_rect);
-    
-    int yOff = 42; 
-    int clockX = (SCREEN_W - w) / 2;
-    d.setCursor(clockX, yOff);
+    // Draw Jumbo bold digits
+    d.setTextSize(3);
+    d.setCursor(19, 20);
     d.print(timeStr);
     
-    // AM / PM indicator for 12h
-    d.setFont();
+    // 12h AM / PM badge
     d.setTextSize(1);
     if (!is24) {
-        d.setCursor(clockX + w + 2, yOff - 22);
-        d.print(pm ? "PM" : "AM");
+        d.setCursor(111, 20);
+        d.print(pm ? "P" : "A");
+        d.setCursor(111, 30);
+        d.print("M");
     }
     
-    // Seconds Progress Track at bottom
+    // Footer: Seconds Progress Track & Status
+    d.drawFastHLine(0, 52, SCREEN_W, SSD1306_WHITE);
     int secW = (s * (SCREEN_W - 4)) / 59;
-    d.drawFastHLine(2, 59, SCREEN_W - 4, SSD1306_BLACK);
-    d.drawFastHLine(2, 60, SCREEN_W - 4, SSD1306_WHITE);
     if (secW > 0) {
-        d.drawFastHLine(2, 61, secW, SSD1306_WHITE);
+        d.fillRect(2, 55, secW, 4, SSD1306_WHITE);
     }
 }
 

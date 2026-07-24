@@ -32,4 +32,8 @@ private:
     Storage* _storage = nullptr;
     bool _isSynced = false;
     unsigned long _lastSyncTime = 0;
+    time_t _baseEpoch = 1721820000; // Default epoch (July 2024)
+    unsigned long _baseMillis = 0;
+    
+    time_t _getCurrentEpoch() const;
 };

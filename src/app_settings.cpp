@@ -56,7 +56,16 @@ void AppSettings::handleTouch(TouchEvent event) {
                 if (_storage) _storage->setEyeStyle(_eyeStyle);
                 break;
                 
-            case 4: // Sleep Timeout
+            case 4: // Expression Preview
+                _previewExprIndex = (_previewExprIndex + 1) % (int)Expression::COUNT;
+                if (_face) _face->setExpression((Expression)_previewExprIndex, 250);
+                break;
+                
+            case 5: // Pet Mood (Petting boost)
+                if (_face) _face->setHappiness(100);
+                break;
+                
+            case 6: // Sleep Timeout
                 if (_sleepTimeout == 60000) _sleepTimeout = 120000;
                 else if (_sleepTimeout == 120000) _sleepTimeout = 300000;
                 else if (_sleepTimeout == 300000) _sleepTimeout = 600000;
@@ -64,7 +73,7 @@ void AppSettings::handleTouch(TouchEvent event) {
                 if (_storage) _storage->setSleepTimeout(_sleepTimeout);
                 break;
                 
-            case 5: // WiFi Reset
+            case 7: // WiFi Reset
                 if (_wifi) {
                     _wifi->disconnect();
                     if (_storage) _storage->setWifi("", "");
@@ -72,7 +81,7 @@ void AppSettings::handleTouch(TouchEvent event) {
                 }
                 break;
                 
-            case 6: // Erase All
+            case 8: // Erase All
                 if (_storage) _storage->eraseAll();
                 ESP.restart();
                 break;
@@ -118,7 +127,7 @@ void AppSettings::render() {
     int yBase = 16;
     int yStep = 11;
     
-    char buf[16];
+    char buf[24];
     
     for (int i = 0; i < 4; i++) {
         int idx = startIdx + i;
@@ -145,15 +154,33 @@ void AppSettings::render() {
                 val = _eyeStyle == 0 ? "Classic" : (_eyeStyle == 1 ? "Vector" : (_eyeStyle == 2 ? "Neon" : "Cyber"));
                 break;
             case 4:
+                label = "Preview Face";
+                if (_face) {
+                    snprintf(buf, sizeof(buf), "%d %s", _previewExprIndex + 1, _face->getExpressionName((Expression)_previewExprIndex));
+                } else {
+                    snprintf(buf, sizeof(buf), "%d/19", _previewExprIndex + 1);
+                }
+                val = buf;
+                break;
+            case 5:
+                label = "Pet Mood";
+                if (_face) {
+                    snprintf(buf, sizeof(buf), "%d%% Happy", _face->getHappiness());
+                } else {
+                    snprintf(buf, sizeof(buf), "75%%");
+                }
+                val = buf;
+                break;
+            case 6:
                 label = "Sleep in";
                 snprintf(buf, sizeof(buf), "%d min", (int)(_sleepTimeout / 60000));
                 val = buf;
                 break;
-            case 5:
+            case 7:
                 label = "Reset WiFi";
                 val = "Hold";
                 break;
-            case 6:
+            case 8:
                 label = "Factory Rst";
                 val = "Hold";
                 break;

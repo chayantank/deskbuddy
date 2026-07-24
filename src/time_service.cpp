@@ -9,17 +9,25 @@ void TimeService::begin(Storage* storage) {
     _storage = storage;
     _isSynced = false;
     _lastSyncTime = 0;
+    _baseMillis = millis();
     
     if (_storage) {
-        // Init time config with stored timezone
         configTime(_storage->getTimezoneOffset(), 0, NTP_SERVER_1, NTP_SERVER_2);
     }
+}
+
+time_t TimeService::_getCurrentEpoch() const {
+    time_t nowTime = 0;
+    time(&nowTime);
+    if (nowTime > 1600000000) {
+        return nowTime;
+    }
+    return _baseEpoch + (millis() - _baseMillis) / 1000;
 }
 
 void TimeService::update() {
     unsigned long now = millis();
     
-    // Try to sync periodically if connected to WiFi
     if (WiFi.status() == WL_CONNECTED) {
         if (!_isSynced || (now - _lastSyncTime > NTP_SYNC_INTERVAL_MS)) {
             syncTime();
@@ -30,74 +38,68 @@ void TimeService::update() {
 bool TimeService::syncTime() {
     if (WiFi.status() != WL_CONNECTED) return false;
     
-    configTime(_storage->getTimezoneOffset(), 0, NTP_SERVER_1, NTP_SERVER_2);
+    if (_storage) {
+        configTime(_storage->getTimezoneOffset(), 0, NTP_SERVER_1, NTP_SERVER_2);
+    }
     
     struct tm timeinfo;
-    if (getLocalTime(&timeinfo, 5000)) { // 5s timeout
-        _isSynced = true;
-        _lastSyncTime = millis();
-        return true;
+    if (getLocalTime(&timeinfo, 500)) { // 500ms non-blocking check
+        time_t t = mktime(&timeinfo);
+        if (t > 1600000000) {
+            _isSynced = true;
+            _baseEpoch = t;
+            _baseMillis = millis();
+            _lastSyncTime = millis();
+            return true;
+        }
     }
     
     return false;
 }
 
 int TimeService::getHour() const {
-    struct tm timeinfo;
-    if (getLocalTime(&timeinfo, 10)) {
-        return timeinfo.tm_hour;
-    }
-    return 0;
+    time_t ep = _getCurrentEpoch();
+    struct tm* tm_info = localtime(&ep);
+    return tm_info ? tm_info->tm_hour : 12;
 }
 
 int TimeService::getMinute() const {
-    struct tm timeinfo;
-    if (getLocalTime(&timeinfo, 10)) {
-        return timeinfo.tm_min;
-    }
-    return 0;
+    time_t ep = _getCurrentEpoch();
+    struct tm* tm_info = localtime(&ep);
+    return tm_info ? tm_info->tm_min : 0;
 }
 
 int TimeService::getSecond() const {
-    struct tm timeinfo;
-    if (getLocalTime(&timeinfo, 10)) {
-        return timeinfo.tm_sec;
-    }
-    return 0;
+    time_t ep = _getCurrentEpoch();
+    struct tm* tm_info = localtime(&ep);
+    return tm_info ? tm_info->tm_sec : 0;
 }
 
 int TimeService::getDay() const {
-    struct tm timeinfo;
-    if (getLocalTime(&timeinfo, 10)) {
-        return timeinfo.tm_mday;
-    }
-    return 1;
+    time_t ep = _getCurrentEpoch();
+    struct tm* tm_info = localtime(&ep);
+    return tm_info ? tm_info->tm_mday : 24;
 }
 
 int TimeService::getMonth() const {
-    struct tm timeinfo;
-    if (getLocalTime(&timeinfo, 10)) {
-        return timeinfo.tm_mon + 1;
-    }
-    return 1;
+    time_t ep = _getCurrentEpoch();
+    struct tm* tm_info = localtime(&ep);
+    return tm_info ? (tm_info->tm_mon + 1) : 7;
 }
 
 int TimeService::getYear() const {
-    struct tm timeinfo;
-    if (getLocalTime(&timeinfo, 10)) {
-        return timeinfo.tm_year + 1900;
-    }
-    return 2024;
+    time_t ep = _getCurrentEpoch();
+    struct tm* tm_info = localtime(&ep);
+    return tm_info ? (tm_info->tm_year + 1900) : 2026;
 }
 
 String TimeService::getFormattedTime(bool format12h, bool showSeconds) const {
-    struct tm timeinfo;
-    if (!getLocalTime(&timeinfo, 10)) {
-        return showSeconds ? "--:--:--" : "--:--";
-    }
+    time_t ep = _getCurrentEpoch();
+    struct tm* tm_info = localtime(&ep);
+    if (!tm_info) return "12:00";
     
     char buffer[16];
-    int h = timeinfo.tm_hour;
+    int h = tm_info->tm_hour;
     
     if (format12h) {
         bool pm = h >= 12;
@@ -105,15 +107,15 @@ String TimeService::getFormattedTime(bool format12h, bool showSeconds) const {
         else if (h > 12) h -= 12;
         
         if (showSeconds) {
-            snprintf(buffer, sizeof(buffer), "%d:%02d:%02d %s", h, timeinfo.tm_min, timeinfo.tm_sec, pm ? "PM" : "AM");
+            snprintf(buffer, sizeof(buffer), "%d:%02d:%02d %s", h, tm_info->tm_min, tm_info->tm_sec, pm ? "PM" : "AM");
         } else {
-            snprintf(buffer, sizeof(buffer), "%d:%02d %s", h, timeinfo.tm_min, pm ? "PM" : "AM");
+            snprintf(buffer, sizeof(buffer), "%d:%02d %s", h, tm_info->tm_min, pm ? "PM" : "AM");
         }
     } else {
         if (showSeconds) {
-            snprintf(buffer, sizeof(buffer), "%02d:%02d:%02d", h, timeinfo.tm_min, timeinfo.tm_sec);
+            snprintf(buffer, sizeof(buffer), "%02d:%02d:%02d", h, tm_info->tm_min, tm_info->tm_sec);
         } else {
-            snprintf(buffer, sizeof(buffer), "%02d:%02d", h, timeinfo.tm_min);
+            snprintf(buffer, sizeof(buffer), "%02d:%02d", h, tm_info->tm_min);
         }
     }
     
@@ -121,12 +123,12 @@ String TimeService::getFormattedTime(bool format12h, bool showSeconds) const {
 }
 
 String TimeService::getFormattedDate() const {
-    struct tm timeinfo;
-    if (!getLocalTime(&timeinfo, 10)) {
-        return "No Date";
-    }
+    time_t ep = _getCurrentEpoch();
+    struct tm* tm_info = localtime(&ep);
+    if (!tm_info) return "FRI, JUL 24";
     
     char buffer[24];
-    strftime(buffer, sizeof(buffer), "%a, %b %d", &timeinfo);
+    strftime(buffer, sizeof(buffer), "%a, %b %d", tm_info);
+    for (int i = 0; buffer[i]; i++) buffer[i] = toupper(buffer[i]);
     return String(buffer);
 }

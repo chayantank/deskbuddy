@@ -142,11 +142,6 @@ void AppWeather::_fetchWeather() {
     if (WiFi.status() != WL_CONNECTED || !_storage) return;
     
     _isFetching = true;
-    if (_dm) {
-        _dm->beginFrame();
-        _dm->drawCenteredText("Fetching Weather...", 30, 1);
-        _dm->show();
-    }
     
     WiFiClientSecure client;
     client.setInsecure();

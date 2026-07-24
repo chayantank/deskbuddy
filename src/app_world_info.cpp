@@ -27,7 +27,7 @@ void AppWorldInfo::onExit() {
 }
 
 void AppWorldInfo::update() {
-    // Scroll update handled in render
+    _scrollX++;
 }
 
 void AppWorldInfo::handleTouch(TouchEvent event) {
@@ -118,11 +118,6 @@ void AppWorldInfo::_fetchData(InfoType type) {
     if (WiFi.status() != WL_CONNECTED) return;
     
     _isFetching = true;
-    if (_dm) {
-        _dm->beginFrame();
-        _dm->drawCenteredText("Loading...", 32, 1);
-        _dm->show();
-    }
     
     switch (type) {
         case InfoType::GOLD:       _fetchGold(); break;
@@ -154,15 +149,22 @@ void AppWorldInfo::_fetchGold() {
             JsonDocument doc;
             DeserializationError err = deserializeJson(doc, payload);
             if (!err) {
-                float priceOzUsd = doc["price"]; // price per oz USD
+                float priceOzUsd = doc["price"].as<float>();
+                if (priceOzUsd <= 0 && doc["price"].is<const char*>()) {
+                    priceOzUsd = atof(doc["price"].as<const char*>());
+                }
+                
                 if (priceOzUsd > 0) {
-                    float price10gUsd = (priceOzUsd / 31.1035f) * 10.0f;
-                    float usdInr = 83.5f;
-                    int price10gInr = (int)round(price10gUsd * usdInr);
+                    // 1 troy oz = 31.1035g
+                    float priceGramUsd = priceOzUsd / 31.1035f;
+                    float usdInr = 86.5f;
+                    
+                    // Include Indian import duty & GST (18%) for accurate retail 24K 10g price
+                    int price10gInr = (int)round(priceGramUsd * 10.0f * usdInr * 1.18f);
                     
                     char buf1[32], buf2[32];
-                    snprintf(buf1, sizeof(buf1), "Rs %d / 10g", price10gInr);
-                    snprintf(buf2, sizeof(buf2), "$%d / troy oz", (int)round(priceOzUsd));
+                    snprintf(buf1, sizeof(buf1), "Rs %d / 10g (24K)", price10gInr);
+                    snprintf(buf2, sizeof(buf2), "$%d / oz spot", (int)round(priceOzUsd));
                     
                     _infoText[(int)InfoType::GOLD] = buf1;
                     _authorText[(int)InfoType::GOLD] = buf2;
