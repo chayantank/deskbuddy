@@ -35,8 +35,8 @@ private:
     InfoType _type = InfoType::GOLD;
     bool _isFetching = false;
     
-    String _infoText = "";
-    String _authorText = "";
+    String _infoText[(int)InfoType::COUNT];
+    String _authorText[(int)InfoType::COUNT];
     unsigned long _lastFetchTime[(int)InfoType::COUNT] = {0};
     
     // For scrolling long text

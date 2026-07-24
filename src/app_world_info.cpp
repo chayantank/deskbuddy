@@ -17,8 +17,8 @@ void AppWorldInfo::begin(DisplayManager* dm, Storage* storage) {
 void AppWorldInfo::onEnter() {
     _scrollX = 0;
     
-    // Fetch if empty or old
-    if (_infoText.length() == 0 || millis() - _lastFetchTime[(int)_type] > INFO_REFRESH_MS) {
+    // Fetch if empty or old for current category
+    if (_infoText[(int)_type].length() == 0 || millis() - _lastFetchTime[(int)_type] > INFO_REFRESH_MS) {
         _fetchData(_type);
     }
 }
@@ -35,7 +35,7 @@ void AppWorldInfo::handleTouch(TouchEvent event) {
         _type = (InfoType)(((int)_type + 1) % (int)InfoType::COUNT);
         _scrollX = 0;
         
-        if (_infoText.length() == 0 || millis() - _lastFetchTime[(int)_type] > INFO_REFRESH_MS) {
+        if (_infoText[(int)_type].length() == 0 || millis() - _lastFetchTime[(int)_type] > INFO_REFRESH_MS) {
             _fetchData(_type);
         }
     } else if (event == TouchEvent::LONG_PRESS) {
@@ -70,7 +70,10 @@ void AppWorldInfo::render() {
         return;
     }
     
-    if (_infoText.length() == 0) {
+    String currText = _infoText[(int)_type];
+    String currAuthor = _authorText[(int)_type];
+    
+    if (currText.length() == 0) {
         if (WiFi.status() != WL_CONNECTED) {
             _dm->drawCenteredText("WiFi Disconnected", 32, 1);
         } else {
@@ -83,17 +86,17 @@ void AppWorldInfo::render() {
     // Content rendering based on type
     if (_type == InfoType::GOLD || _type == InfoType::CRYPTO) {
         d.setTextSize(1);
-        _dm->drawCenteredText(_infoText.c_str(), 24, 1);
-        if (_authorText.length() > 0) {
-            _dm->drawCenteredText(_authorText.c_str(), 42, 1);
+        _dm->drawCenteredText(currText.c_str(), 24, 1);
+        if (currAuthor.length() > 0) {
+            _dm->drawCenteredText(currAuthor.c_str(), 42, 1);
         }
     } else {
         // Multi-line word wrap if short, scroll if long
         d.setTextSize(1);
-        _dm->drawScrollingText(_infoText.c_str(), 24, _scrollX, 1);
+        _dm->drawScrollingText(currText.c_str(), 24, _scrollX, 1);
         
-        if (_authorText.length() > 0) {
-            _dm->drawCenteredText(_authorText.c_str(), 44, 1);
+        if (currAuthor.length() > 0) {
+            _dm->drawCenteredText(currAuthor.c_str(), 44, 1);
         }
     }
     
@@ -161,8 +164,8 @@ void AppWorldInfo::_fetchGold() {
                     snprintf(buf1, sizeof(buf1), "Rs %d / 10g", price10gInr);
                     snprintf(buf2, sizeof(buf2), "$%d / troy oz", (int)round(priceOzUsd));
                     
-                    _infoText = buf1;
-                    _authorText = buf2;
+                    _infoText[(int)InfoType::GOLD] = buf1;
+                    _authorText[(int)InfoType::GOLD] = buf2;
                 }
             }
         }
@@ -184,8 +187,8 @@ void AppWorldInfo::_fetchSports() {
             if (!err && doc["data"].is<JsonArray>() && doc["data"].size() > 0) {
                 const char* title = doc["data"][0]["title"];
                 if (title) {
-                    _infoText = title;
-                    _authorText = "India Sports";
+                    _infoText[(int)InfoType::SPORTS] = title;
+                    _authorText[(int)InfoType::SPORTS] = "India Sports";
                 }
             }
         }
@@ -207,8 +210,8 @@ void AppWorldInfo::_fetchIndiaNews() {
             if (!err && doc["data"].is<JsonArray>() && doc["data"].size() > 0) {
                 const char* title = doc["data"][0]["title"];
                 if (title) {
-                    _infoText = title;
-                    _authorText = "India Headlines";
+                    _infoText[(int)InfoType::INDIA_NEWS] = title;
+                    _authorText[(int)InfoType::INDIA_NEWS] = "India Headlines";
                 }
             }
         }
@@ -230,8 +233,8 @@ void AppWorldInfo::_fetchTechNews() {
             if (!err && doc["data"].is<JsonArray>() && doc["data"].size() > 0) {
                 const char* title = doc["data"][0]["title"];
                 if (title) {
-                    _infoText = title;
-                    _authorText = "Tech News";
+                    _infoText[(int)InfoType::TECH] = title;
+                    _authorText[(int)InfoType::TECH] = "Tech News";
                 }
             }
         }
@@ -276,8 +279,8 @@ void AppWorldInfo::_fetchCrypto() {
         char buf1[32], buf2[32];
         snprintf(buf1, sizeof(buf1), "BTC: $%d", (int)round(btcPrice));
         snprintf(buf2, sizeof(buf2), "ETH: $%d", (int)round(ethPrice));
-        _infoText = buf1;
-        _authorText = buf2;
+        _infoText[(int)InfoType::CRYPTO] = buf1;
+        _authorText[(int)InfoType::CRYPTO] = buf2;
     }
 }
 
@@ -297,8 +300,8 @@ void AppWorldInfo::_fetchQuote() {
             if (!err && doc.is<JsonArray>() && doc.size() > 0) {
                 const char* q = doc[0]["q"];
                 const char* a = doc[0]["a"];
-                if (q) _infoText = String("\"") + q + "\"";
-                if (a) _authorText = String("- ") + a;
+                if (q) _infoText[(int)InfoType::QUOTE] = String("\"") + q + "\"";
+                if (a) _authorText[(int)InfoType::QUOTE] = String("- ") + a;
             }
         }
         http.end();
@@ -321,8 +324,8 @@ void AppWorldInfo::_fetchFact() {
             if (!err) {
                 const char* text = doc["text"];
                 if (text) {
-                    _infoText = text;
-                    _authorText = "Random Fact";
+                    _infoText[(int)InfoType::FACT] = text;
+                    _authorText[(int)InfoType::FACT] = "Random Fact";
                 }
             }
         }
